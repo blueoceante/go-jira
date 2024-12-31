@@ -309,8 +309,10 @@ func CheckResponse(r *http.Response) error {
 		return nil
 	}
 
-	err := fmt.Errorf("request failed. Please analyze the request body for more details. Status code: %d", r.StatusCode)
-	return err
+	//err := fmt.Errorf("request failed. Please analyze the request body for more details. Status code: %d", r.StatusCode)
+	//return err
+	jiraError := NewJiraErrorFromResp(r)
+	return jiraError
 }
 
 // GetBaseURL will return you the Base URL.

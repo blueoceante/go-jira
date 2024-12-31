@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -44,6 +45,28 @@ func NewJiraError(resp *Response, httpError error) error {
 		return errors.Wrap(httpError, fmt.Sprintf("%s: %s", resp.Status, string(body)))
 	}
 
+	return &jerr
+}
+
+func NewJiraErrorFromResp(resp *http.Response) error {
+	if resp == nil {
+		return fmt.Errorf("no response returned")
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return errors.Wrap(err, "could not read response body")
+	}
+	jerr := Error{HTTPError: nil}
+	contentType := resp.Header.Get("Content-Type")
+	if strings.HasPrefix(contentType, "application/json") {
+		err = json.Unmarshal(body, &jerr)
+		if err != nil {
+			return errors.Wrap(err, "could not parse JSON")
+		}
+	} else {
+		return fmt.Errorf("got response status %s:%s", resp.Status, string(body))
+	}
 	return &jerr
 }
 
